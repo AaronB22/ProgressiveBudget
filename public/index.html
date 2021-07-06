@@ -41,15 +41,6 @@
     
     <canvas id="myChart"></canvas>
   </div>
-  <script>
-     if ("serviceWorker" in navigator)
-     (function () {
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("./service-worker.js", { scope: "/" })
-          .then(() => console.log("Service Worker registered successfully."))
-          .catch(error => console.log("Service Worker registration failed:", error));
-      }
-    })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
   <script src="index.js"></script>

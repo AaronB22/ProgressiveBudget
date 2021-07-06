@@ -1,5 +1,25 @@
 let transactions = [];
 let myChart;
+let wentOffline=false
+
+
+if ("serviceWorker" in navigator)
+(function () {
+ if ("serviceWorker" in navigator) {
+   navigator.serviceWorker.register("./service-worker.js", { scope: "/" })
+     .then(() => console.log("Service Worker registered successfully."))
+     .catch(error => console.log("Service Worker registration failed:", error));
+ }
+})();
+
+if ("serviceWorker" in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker
+      .register('./service-worker.js')
+      .then(reg => console.log('service worker online'))
+      .catch(err=> console.log(`Fail ${err}`))
+  })
+}
 
 fetch("/api/transaction")
   .then(response => {
@@ -121,7 +141,9 @@ function sendTransaction(isAdding) {
       "Content-Type": "application/json"
     }
   })
-  .then(response => {    
+  .then(response => {  
+    console.log('ONLINE')
+    
     return response.json();
   })
   .then(data => {
@@ -129,14 +151,97 @@ function sendTransaction(isAdding) {
       errorEl.textContent = "Missing Information";
     }
     else {
-      // clear form
+      const clearData=()=>{
+        const request = window.indexedDB.open('offline-budget', 1);
+        request.onsuccess=()=>{
+          const db = request.result;
+          const dataTransaction= db.transaction(['offline-budget'], 'readwrite')
+          const objectStore= dataTransaction.objectStore('offline-budget')
+          const clearObjectStore=objectStore.clear();
+          clearObjectStore.onsuccess=()=>{
+            console.log('data cleared')
+          }
+        }
+      }
+      
+      const pushLocalDataToServer=()=>{
+        const request = window.indexedDB.open('offline-budget', 1);
+        request.onupgradeneeded=(e)=>{
+          const db=e.target.result;
+          const offlineBudgetObjectStore=db.createObjectStore('offline-budget',
+          {keyPath:"name"});
+          offlineBudgetObjectStore.createIndex('transation', 'value')
+        }
+        request.onsuccess=()=>{
+          console.log(request.result)
+          const db = request.result;
+          const dataTransaction= db.transaction(['offline-budget'], 'readwrite')
+          const offlineBudgetStorage =  dataTransaction.objectStore('offline-budget')
+          const getData= offlineBudgetStorage.index('transation')
+
+          const gettingData= getData.getAll();
+          gettingData.onsuccess=()=>{
+            const info=gettingData.result
+            console.log(info)
+            for( let i=0; i<info.length;i++){
+              console.log('forloop')
+              let newTransaction= {
+                date:info[i].date,
+                name: info[i].name,
+                value:info[i].value
+              }
+              console.log(newTransaction)
+              fetch("/api/transaction", {
+                method: "POST",
+                body: JSON.stringify(newTransaction),
+                headers: {
+                  Accept: "application/json, text/plain, */*",
+                  "Content-Type": "application/json"
+                }
+              })
+              clearData()
+            }
+          }
+
+        }
+      }
+      if(wentOffline){
+
+        pushLocalDataToServer()
+      }
+      
+
+
+
       nameEl.value = "";
       amountEl.value = "";
     }
   })
   .catch(err => {
+    console.log('OFFLINE')
+    wentOffline=true
     // fetch failed, so save in indexed db
-    saveRecord(transaction);
+    const request = window.indexedDB.open('offline-budget', 1);
+    // saveRecord(transaction);
+    console.log(transaction)
+    request.onupgradeneeded=(e)=>{
+      const db=e.target.result;
+      const offlineBudgetObjectStore=db.createObjectStore('offline-budget',
+      {keyPath:"name"});
+      offlineBudgetObjectStore.createIndex('transation', 'value')
+    }
+    request.onsuccess=()=>{
+      const db = request.result;
+    
+      // const objectStore=db.createObjectStore('offline-budget');
+      const dataTransaction= db.transaction(['offline-budget'], 'readwrite')
+      const offlineBudgetStorage =  dataTransaction.objectStore('offline-budget')
+      
+      
+      offlineBudgetStorage.add({date: transaction.date, name: transaction.name, value: transaction.value})
+      console.log(request.result)
+      
+    }
 
     // clear form
     nameEl.value = "";
