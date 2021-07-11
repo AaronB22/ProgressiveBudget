@@ -15,8 +15,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(express.static("public"));
-console.log('mongodb+srv://aaronb22:1LazyDog00@cluster0.wozkq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority')
-mongoose.connect(process.env.MONGODB_URI, {
+
+mongoose.connect('mongodb+srv://aaronb22:coolpassword@cluster0.wozkq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', {
   useNewUrlParser: true,
   useFindAndModify: false
 });
