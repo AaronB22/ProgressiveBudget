@@ -220,9 +220,8 @@ function sendTransaction(isAdding) {
   .catch(err => {
     console.log('OFFLINE')
     wentOffline=true
-    // fetch failed, so save in indexed db
     const request = window.indexedDB.open('offline-budget', 1);
-    // saveRecord(transaction);
+  
     console.log(transaction)
     request.onupgradeneeded=(e)=>{
       const db=e.target.result;
@@ -232,8 +231,7 @@ function sendTransaction(isAdding) {
     }
     request.onsuccess=()=>{
       const db = request.result;
-    
-      // const objectStore=db.createObjectStore('offline-budget');
+  
       const dataTransaction= db.transaction(['offline-budget'], 'readwrite')
       const offlineBudgetStorage =  dataTransaction.objectStore('offline-budget')
       
