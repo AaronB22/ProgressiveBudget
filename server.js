@@ -6,6 +6,7 @@ const compression = require("compression");
 
 const PORT = process.env.PORT || 3000;
 
+
 const app = express();
 
 app.use(logger("dev"));
@@ -16,7 +17,7 @@ app.use(express.json());
 
 app.use(express.static("public"));
 
-mongoose.connect('mongodb+srv://aaronb22:coolpassword@cluster0.wozkq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', {
+mongoose.connect(rocess.env.MONGODB_URI, {
   useNewUrlParser: true,
   useFindAndModify: false
 });
